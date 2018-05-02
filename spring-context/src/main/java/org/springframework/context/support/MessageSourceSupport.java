@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2017 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.springframework.context.support;
 
+import java.text.Format;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Locale;
@@ -53,7 +54,7 @@ public abstract class MessageSourceSupport {
 	 * Used for passed-in default messages. MessageFormats for resolved
 	 * codes are cached on a specific basis in subclasses.
 	 */
-	private final Map<String, Map<Locale, MessageFormat>> messageFormatsPerMessage = new HashMap<>();
+	private final Map<String, Map<Locale, Format>> messageFormatsPerMessage = new HashMap<>();
 
 
 	/**
@@ -102,7 +103,7 @@ public abstract class MessageSourceSupport {
 	}
 
 	/**
-	 * Format the given message String, using cached MessageFormats.
+	 * Format the given message String, using cached Formats.
 	 * By default invoked for passed-in default messages, to resolve
 	 * any argument placeholders found in them.
 	 * @param msg the message to format
@@ -115,9 +116,9 @@ public abstract class MessageSourceSupport {
 		if (!isAlwaysUseMessageFormat() && ObjectUtils.isEmpty(args)) {
 			return msg;
 		}
-		MessageFormat messageFormat = null;
+		Format messageFormat = null;
 		synchronized (this.messageFormatsPerMessage) {
-			Map<Locale, MessageFormat> messageFormatsPerLocale = this.messageFormatsPerMessage.get(msg);
+			Map<Locale, Format> messageFormatsPerLocale = this.messageFormatsPerMessage.get(msg);
 			if (messageFormatsPerLocale != null) {
 				messageFormat = messageFormatsPerLocale.get(locale);
 			}
@@ -127,7 +128,7 @@ public abstract class MessageSourceSupport {
 			}
 			if (messageFormat == null) {
 				try {
-					messageFormat = createMessageFormat(msg, locale);
+					messageFormat = createFormat(msg, locale);
 				}
 				catch (IllegalArgumentException ex) {
 					// Invalid message format - probably not intended for formatting,
@@ -150,11 +151,23 @@ public abstract class MessageSourceSupport {
 	}
 
 	/**
+	 * Create a Format for the given message and Locale.
+	 * @param msg the message to create a Format for
+	 * @param locale the Locale to create a Format for
+	 * @return the Format instance
+	 */
+	protected Format createFormat(String msg, Locale locale) {
+		return createMessageFormat(msg, locale); //TODO: inline
+	}
+
+	/**
 	 * Create a MessageFormat for the given message and Locale.
 	 * @param msg the message to create a MessageFormat for
 	 * @param locale the Locale to create a MessageFormat for
 	 * @return the MessageFormat instance
+	 * @deprecated override/move to {@link #createFormat} instead
 	 */
+	@Deprecated
 	protected MessageFormat createMessageFormat(String msg, Locale locale) {
 		return new MessageFormat(msg, locale);
 	}
